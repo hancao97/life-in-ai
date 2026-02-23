@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Life In AI</title>
+    <style>
+      :root {
+        --bg-0: #09121f;
+        --bg-1: #12263f;
+        --panel: rgba(11, 22, 36, 0.7);
+        --line: rgba(113, 186, 255, 0.22);
+        --text: #e6f0ff;
+        --muted: #9ab3d8;
+        --accent: #4ae0d2;
+        --accent-2: #60a8ff;
+        --danger: #ff8f8f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 15% 20%, rgba(96, 168, 255, 0.2), transparent 35%),
+          radial-gradient(circle at 85% 12%, rgba(74, 224, 210, 0.15), transparent 28%),
+          radial-gradient(circle at 50% 85%, rgba(54, 114, 201, 0.15), transparent 35%),
+          linear-gradient(140deg, var(--bg-0), var(--bg-1));
+      }
+
+      .grid-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.14;
+        background-image:
+          linear-gradient(rgba(180, 210, 255, 0.35) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(180, 210, 255, 0.35) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+
+      .container {
+        width: min(1100px, 92vw);
+        height: calc(100vh - 24px);
+        margin: 12px auto;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 12px;
+      }
+
+      .hero {
+        padding: 16px 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: linear-gradient(170deg, rgba(24, 42, 68, 0.75), rgba(7, 13, 21, 0.68));
+        box-shadow: 0 18px 40px rgba(6, 8, 14, 0.45);
+      }
+
+      .title {
+        margin: 0;
+        font-size: clamp(24px, 3vw, 36px);
+        letter-spacing: 0.06em;
+      }
+
+      .subtitle {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .main {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        min-height: 0;
+        gap: 12px;
+      }
+
+      .panel {
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        backdrop-filter: blur(6px);
+        padding: 14px;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .panel-config {
+        display: grid;
+        grid-template-rows: auto 1fr auto auto;
+      }
+
+      .panel h2 {
+        margin: 0 0 10px;
+        font-size: 16px;
+        letter-spacing: 0.04em;
+      }
+
+      .group {
+        margin-bottom: 10px;
+      }
+
+      .group-title {
+        margin: 0 0 6px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .chip {
+        border: 1px solid rgba(123, 170, 229, 0.38);
+        border-radius: 10px;
+        padding: 6px 8px;
+        font-size: 12px;
+        color: #d8e9ff;
+        background: rgba(11, 18, 30, 0.6);
+        cursor: pointer;
+        transition: 0.18s ease;
+      }
+
+      .chip:hover {
+        border-color: rgba(96, 168, 255, 0.65);
+        transform: translateY(-1px);
+      }
+
+      .chip.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(74, 224, 210, 0.35) inset;
+        background: rgba(19, 47, 61, 0.8);
+      }
+
+      .actions {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .config-scroll {
+        min-height: 0;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .config-scroll::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .config-scroll::-webkit-scrollbar-thumb {
+        background: rgba(96, 168, 255, 0.45);
+        border-radius: 999px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      #generate-btn {
+        color: #041014;
+        background: linear-gradient(120deg, var(--accent), #73f3d1);
+        font-weight: 700;
+      }
+
+      #generate-btn:disabled {
+        cursor: wait;
+        opacity: 0.7;
+      }
+
+      #reset-btn {
+        background: rgba(71, 118, 182, 0.35);
+        color: var(--text);
+      }
+
+      .status {
+        min-height: 18px;
+        font-size: 12px;
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      .status.success {
+        color: var(--accent);
+      }
+
+      .avatar-wrap {
+        display: grid;
+        place-items: center;
+        border: 1px dashed rgba(119, 182, 255, 0.35);
+        border-radius: 12px;
+        min-height: 140px;
+        background: rgba(8, 16, 28, 0.6);
+      }
+
+      .avatar-wrap.hidden {
+        display: none;
+      }
+
+      #pixel-avatar {
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        width: 128px;
+        height: 128px;
+      }
+
+      .result {
+        margin-top: 10px;
+        min-height: 0;
+      }
+
+      .result pre {
+        white-space: pre-wrap;
+        margin: 0;
+        font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+        line-height: 1.55;
+        font-size: 13px;
+        color: #d7e8ff;
+        max-height: calc(100vh - 390px);
+        overflow: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(96, 168, 255, 0.72) rgba(11, 22, 36, 0.45);
+      }
+
+      .result pre::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      .result pre::-webkit-scrollbar-track {
+        background: linear-gradient(180deg, rgba(11, 22, 36, 0.42), rgba(8, 16, 28, 0.7));
+        border-left: 1px solid rgba(96, 168, 255, 0.2);
+      }
+
+      .result pre::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(74, 224, 210, 0.85), rgba(96, 168, 255, 0.75));
+        border: 2px solid rgba(8, 16, 28, 0.8);
+        border-radius: 999px;
+        box-shadow: 0 0 8px rgba(74, 224, 210, 0.3);
+      }
+
+      .result pre::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, rgba(111, 245, 220, 0.95), rgba(126, 188, 255, 0.92));
+      }
+
+      .result pre::-webkit-scrollbar-corner {
+        background: rgba(8, 16, 28, 0.7);
+      }
+
+      .avatar-hint {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 920px) {
+        body {
+          height: auto;
+          min-height: 100vh;
+          overflow: auto;
+        }
+
+        .container {
+          height: auto;
+        }
+
+        .main {
+          grid-template-columns: 1fr;
+        }
+
+        .panel-config {
+          grid-template-rows: auto auto auto auto;
+        }
+
+        .config-scroll {
+          overflow: visible;
+          padding-right: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid-overlay" aria-hidden="true"></div>
+    <div class="container">
+      <section class="hero">
+        <h1 class="title">LIFE IN AI</h1>
+        <p class="subtitle">配置出生背景与行为倾向，生成人生体验设定与访谈素材底稿。</p>
+      </section>
+
+      <section class="main">
+        <div class="panel panel-config">
+          <h2>人生配置</h2>
+          <div class="config-scroll">
+            <div class="group" data-group="gender"></div>
+            <div class="group" data-group="era"></div>
+            <div class="group" data-group="birthYear"></div>
+            <div class="group" data-group="region"></div>
+            <div class="group" data-group="trait"></div>
+          </div>
+
+          <div class="actions">
+            <button id="generate-btn">生成我的人生体验</button>
+            <button id="reset-btn" type="button">重置</button>
+          </div>
+          <p id="status" class="status" aria-live="polite"></p>
+        </div>
+
+        <div class="panel">
+          <h2>像素角色</h2>
+          <p id="avatar-hint" class="avatar-hint">待生成...</p>
+          <div id="avatar-wrap" class="avatar-wrap hidden">
+            <canvas id="pixel-avatar" width="32" height="32" aria-label="像素风角色"></canvas>
+          </div>
+
+          <div class="result">
+            <h2>人生体验生成结果</h2>
+            <pre id="result-text">请选择配置后点击生成...</pre>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
