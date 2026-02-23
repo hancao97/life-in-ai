@@ -1,4 +1,5 @@
 (() => {
+  const INTERVIEW_CONTEXT_KEY = "LIFE_IN_AI_INTERVIEW_CONTEXT";
   const OPTIONS = {
     gender: {
       label: "性别",
@@ -53,7 +54,9 @@
     },
     loading: false,
     avatarReady: false,
-    typewriter: null
+    typewriter: null,
+    lifeExperience: "",
+    avatarDataUrl: ""
   };
 
   const elements = {
@@ -70,7 +73,8 @@
     result: document.getElementById("result-text"),
     avatar: document.getElementById("pixel-avatar"),
     avatarWrap: document.getElementById("avatar-wrap"),
-    avatarHint: document.getElementById("avatar-hint")
+    avatarHint: document.getElementById("avatar-hint"),
+    openInterviewBtn: document.getElementById("open-interview-btn")
   };
 
   const avatarCtx = elements.avatar.getContext("2d");
@@ -81,6 +85,7 @@
     syncDefaultSelections();
     bindActions();
     setAvatarVisible(false);
+    updateInterviewEntryState(false);
   }
 
   function syncDefaultSelections() {
@@ -142,10 +147,13 @@
     });
 
     elements.generateBtn.addEventListener("click", generateExperience);
+    elements.openInterviewBtn.addEventListener("click", openInterviewPage);
 
     elements.resetBtn.addEventListener("click", () => {
       state.selected = { gender: "男性", era: "", birthYear: "", region: "", trait: "" };
       state.avatarReady = false;
+      state.lifeExperience = "";
+      state.avatarDataUrl = "";
       if (state.typewriter) {
         state.typewriter.cancel();
         state.typewriter = null;
@@ -157,6 +165,7 @@
       setStatus("", "");
       clearAvatar();
       setAvatarVisible(false);
+      updateInterviewEntryState(false);
     });
   }
 
@@ -247,6 +256,9 @@
     toggleLoading(true);
     setStatus("已生成像素角色，正在输出人生体验...", "");
     elements.result.textContent = "";
+    state.lifeExperience = "";
+    state.avatarDataUrl = "";
+    updateInterviewEntryState(false);
 
     drawAvatar();
     state.avatarReady = true;
@@ -269,9 +281,15 @@
         throw new Error("接口返回为空，请稍后重试");
       }
       state.avatarReady = true;
+      state.lifeExperience = content.trim();
+      state.avatarDataUrl = elements.avatar.toDataURL("image/png");
+      updateInterviewEntryState(true);
       setStatus("生成人生体验成功。", "success");
     } catch (error) {
       await writer.finish();
+      state.lifeExperience = "";
+      state.avatarDataUrl = "";
+      updateInterviewEntryState(false);
       setStatus(`生成失败：${error.message}`, "error");
     } finally {
       state.typewriter = null;
@@ -283,6 +301,24 @@
     state.loading = loading;
     elements.generateBtn.disabled = loading;
     elements.generateBtn.textContent = loading ? "生成中..." : "生成我的人生体验";
+  }
+
+  function updateInterviewEntryState(enabled) {
+    elements.openInterviewBtn.disabled = !enabled;
+  }
+
+  function openInterviewPage() {
+    if (!state.lifeExperience || !state.avatarDataUrl) {
+      return;
+    }
+    const payload = {
+      selected: state.selected,
+      lifeExperience: state.lifeExperience,
+      avatarDataUrl: state.avatarDataUrl,
+      createdAt: Date.now()
+    };
+    sessionStorage.setItem(INTERVIEW_CONTEXT_KEY, JSON.stringify(payload));
+    window.location.href = "./interview.html";
   }
 
   function buildPrompt() {
@@ -312,15 +348,17 @@
       "人物命运主要由：时代环境 + 出生条件 + 行为选择共同作用形成。",
       "不得简单使用“努力”“天赋”作为决定性因素。",
       "",
-      "三、避免成功叙事",
-      "人生不应自动走向成功或失败。",
-      "允许出现：稳定、波动、停滞、调整等不同状态。",
+      "三、命运分布多样",
+      "人生不应自动走向某一种固定结果。",
+      "允许并鼓励出现：成功、失败、悲剧、落寞、错过、稳定、波动、停滞、调整等不同状态。",
+      "请根据输入参数自然推演，不要总是落在“中度艰辛但平稳”的单一路径。",
       "",
       "四、避免现代视角",
       "不得用当代价值观评判过去社会阶段。",
       "",
       "五、现实可行性",
-      "人生路径必须是当时普通人“可能经历”的轨迹，而不是极端精英或极端悲剧。",
+      "人生路径必须在当时社会条件下真实可发生。",
+      "允许出现少数上升或下坠路径，但要给出清晰、可信、符合时代的因果链条。",
       "",
       "六、生成重点",
       "请重点描述：教育路径、职业路径、家庭变化、关键转折节点。",
@@ -356,7 +394,7 @@
   async function requestModelStream(prompt, onChunk) {
     const cfg = window.LIFE_IN_AI_CONFIG;
     const systemMessage =
-      "你是一个历史一致性人生生成器。你必须优先保证时代约束、社会条件与个人选择之间的因果一致性。不得出现超越时代的机会设定，不得使用现代价值观评判历史阶段，不得把努力或天赋作为决定性解释，不得自动导向成功或失败。输出应聚焦普通人可实现的教育路径、职业路径、家庭变化与关键转折。";
+      "你是一个历史一致性人生生成器。你必须优先保证时代约束、社会条件与个人选择之间的因果一致性。不得出现超越时代的机会设定，不得使用现代价值观评判历史阶段，不得把努力或天赋作为决定性解释。你应生成多样化命运分布：在真实前提下可出现成功、失败、错过、落寞、转机等不同走向，但每种走向都要有具体因果链条。输出聚焦教育路径、职业路径、家庭变化、财富变动、社会地位变化与关键转折。";
 
     const messages = [
       { role: "system", content: systemMessage },

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Life In AI · 访谈</title>
+    <style>
+      :root {
+        --bg-0: #09121f;
+        --bg-1: #12263f;
+        --panel: rgba(11, 22, 36, 0.78);
+        --line: rgba(113, 186, 255, 0.24);
+        --text: #e6f0ff;
+        --muted: #9ab3d8;
+        --accent: #4ae0d2;
+        --right: rgba(45, 74, 120, 0.45);
+        --left: rgba(13, 32, 52, 0.7);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 15% 20%, rgba(96, 168, 255, 0.2), transparent 35%),
+          radial-gradient(circle at 85% 12%, rgba(74, 224, 210, 0.15), transparent 28%),
+          linear-gradient(140deg, var(--bg-0), var(--bg-1));
+      }
+
+      .container {
+        width: min(1200px, 94vw);
+        height: calc(100vh - 20px);
+        margin: 10px auto;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 10px;
+      }
+
+      .top {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 12px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      .meta {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      #back-btn {
+        background: rgba(71, 118, 182, 0.4);
+        color: var(--text);
+      }
+
+      .chat {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 12px;
+        overflow: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(96, 168, 255, 0.72) rgba(11, 22, 36, 0.45);
+      }
+
+      .chat::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      .chat::-webkit-scrollbar-track {
+        background: linear-gradient(180deg, rgba(11, 22, 36, 0.42), rgba(8, 16, 28, 0.7));
+      }
+
+      .chat::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(74, 224, 210, 0.85), rgba(96, 168, 255, 0.75));
+        border: 2px solid rgba(8, 16, 28, 0.8);
+        border-radius: 999px;
+      }
+
+      .message {
+        display: flex;
+        margin-bottom: 10px;
+      }
+
+      .message.left {
+        justify-content: flex-start;
+      }
+
+      .message.right {
+        justify-content: flex-end;
+      }
+
+      .bubble {
+        max-width: min(70ch, 78%);
+        border: 1px solid rgba(117, 168, 236, 0.3);
+        border-radius: 12px;
+        padding: 8px 10px;
+        white-space: pre-wrap;
+        line-height: 1.6;
+        font-size: 14px;
+      }
+
+      .message.left .bubble {
+        background: var(--left);
+      }
+
+      .message.right .bubble {
+        background: var(--right);
+      }
+
+      .bubble-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        color: #b6d2f7;
+        font-size: 12px;
+      }
+
+      .avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        border: 1px solid rgba(120, 180, 245, 0.4);
+        image-rendering: pixelated;
+      }
+
+      .controls {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 10px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .status {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+        min-height: 16px;
+      }
+
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+      }
+
+      #question-input {
+        flex: 1;
+        min-height: 96px;
+        resize: vertical;
+        border-radius: 10px;
+        border: 1px solid rgba(123, 170, 229, 0.38);
+        background: rgba(11, 18, 30, 0.6);
+        color: var(--text);
+        padding: 9px 10px;
+        font-size: 14px;
+        line-height: 1.5;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(96, 168, 255, 0.72) rgba(11, 22, 36, 0.45);
+      }
+
+      #question-input::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      #question-input::-webkit-scrollbar-track {
+        background: rgba(9, 18, 31, 0.6);
+      }
+
+      #question-input::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(74, 224, 210, 0.85), rgba(96, 168, 255, 0.75));
+        border: 2px solid rgba(8, 16, 28, 0.8);
+        border-radius: 999px;
+      }
+
+      #send-btn,
+      #regen-btn {
+        background: linear-gradient(120deg, rgba(74, 224, 210, 0.9), rgba(96, 168, 255, 0.8));
+        color: #031018;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      #send-btn:disabled,
+      #regen-btn:disabled,
+      #question-input:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      @media (max-width: 900px) {
+        .row {
+          flex-wrap: wrap;
+        }
+
+        #send-btn,
+        #regen-btn {
+          flex: 1 1 auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="top">
+        <div>
+          <h1 class="title">访谈页面</h1>
+          <p id="meta" class="meta"></p>
+        </div>
+        <button id="back-btn" type="button">返回人生体验页</button>
+      </div>
+
+      <div id="chat" class="chat"></div>
+
+      <div class="controls">
+        <p id="status" class="status">正在准备访谈员问题...</p>
+        <div class="row">
+          <textarea
+            id="question-input"
+            rows="4"
+            placeholder="访谈员问题会自动生成在这里，可修改后发送（Ctrl/Cmd + Enter 发送）"
+          ></textarea>
+          <button id="regen-btn" type="button">重生成问题</button>
+          <button id="send-btn" type="button">发送并等待回答</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./config.js"></script>
+    <script src="./interview.js"></script>
+  </body>
+</html>

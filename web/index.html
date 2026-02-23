@@ -225,6 +225,28 @@
         min-height: 0;
       }
 
+      .result-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .result-head h2 {
+        margin: 0;
+      }
+
+      #open-interview-btn {
+        background: rgba(71, 118, 182, 0.4);
+        color: var(--text);
+      }
+
+      #open-interview-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
       .result pre {
         white-space: pre-wrap;
         margin: 0;
@@ -291,6 +313,7 @@
           overflow: visible;
           padding-right: 0;
         }
+
       }
     </style>
   </head>
@@ -328,7 +351,10 @@
           </div>
 
           <div class="result">
-            <h2>人生体验生成结果</h2>
+            <div class="result-head">
+              <h2>人生体验生成结果</h2>
+              <button id="open-interview-btn" type="button" disabled>开启访谈</button>
+            </div>
             <pre id="result-text">请选择配置后点击生成...</pre>
           </div>
         </div>
